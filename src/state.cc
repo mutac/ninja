@@ -21,7 +21,7 @@
 #include "graph.h"
 #include "metrics.h"
 #include "util.h"
-
+#include "schedule.h"
 
 void Pool::EdgeScheduled(const Edge& edge) {
   if (depth_ != 0)
@@ -45,6 +45,18 @@ void Pool::RetrieveReadyEdges(set<Edge*>* ready_queue) {
       break;
     delayed_.pop_front();
     ready_queue->insert(edge);
+    EdgeScheduled(*edge);
+  }
+}
+
+void Pool::RetrieveReadyEdges(Scheduler& scheduler) {
+  while (!delayed_.empty())
+  {
+    Edge* edge = delayed_.front();
+    if (current_use_ + edge->weight() > depth_)
+      break;
+    delayed_.pop_front();
+    scheduler.Schedule(edge);
     EdgeScheduled(*edge);
   }
 }

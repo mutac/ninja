@@ -28,6 +28,7 @@ using namespace std;
 struct Edge;
 struct Node;
 struct Rule;
+struct Scheduler;
 
 /// A pool for delayed edges.
 /// Pools are scoped to a State. Edges within a State will share Pools. A Pool
@@ -62,6 +63,7 @@ struct Pool {
 
   /// Pool will add zero or more edges to the ready_queue
   void RetrieveReadyEdges(set<Edge*>* ready_queue);
+  void RetrieveReadyEdges(Scheduler& scheduler);
 
   /// Dump the Pool and its edges (useful for debugging).
   void Dump() const;

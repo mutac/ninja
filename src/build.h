@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "graph.h"  // XXX needed for DependencyScan; should rearrange.
+#include "schedule.h"
 #include "exit_status.h"
 #include "metrics.h"
 #include "util.h"  // int64_t
@@ -87,7 +88,9 @@ private:
   /// want to build it.
   map<Edge*, bool> want_;
 
-  set<Edge*> ready_;
+  //set<Edge*> ready_;
+  Scheduler scheduler_;
+  
 
   /// Total number of edges that have commands (not phony).
   int command_edges_;

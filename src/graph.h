@@ -144,7 +144,7 @@ struct Pool;
 /// An edge in the dependency graph; links between Nodes using Rules.
 struct Edge {
   Edge() : rule_(NULL), env_(NULL), outputs_ready_(false), implicit_deps_(0),
-           order_only_deps_(0) {}
+           order_only_deps_(0), weight_(1) {}
 
   /// Return true if all inputs' in-edges are ready.
   bool AllInputsReady() const;
@@ -176,7 +176,16 @@ struct Edge {
 
   const Rule& rule() const { return *rule_; }
   Pool* pool() const { return pool_; }
-  int weight() const { return 1; }
+
+  //
+  // WADDELL: Weight:
+  //  Typically has a weight of 1,
+  //  Could create a weight based on compilation time.
+  //
+  int weight_;
+  int weight() const { return weight_; }
+  void set_weight(int weight) { weight_ = weight; }
+
   bool outputs_ready() const { return outputs_ready_; }
 
   // XXX There are three types of inputs.
@@ -203,6 +212,20 @@ struct Edge {
   bool is_phony() const;
 };
 
+/// Compare two Edges by their weights
+struct EdgeWeightComparison
+{
+  bool operator()(Edge& e1, Edge& e2)
+  {
+    return e1.weight() < e2.weight();
+  }
+  bool operator()(Edge* e1, Edge* e2)
+  {
+    if (e1 == NULL && e2 == NULL) return true;
+    else if (e1 == NULL || e2 == NULL) return false;
+    return e1->weight() < e2->weight();
+  }
+};
 
 /// DependencyScan manages the process of scanning the files in a graph
 /// and updating the dirty/outputs_ready state of all the nodes and edges.

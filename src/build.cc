@@ -400,28 +400,23 @@ bool Plan::CheckDependencyCycle(Node* node, vector<Node*>* stack, string* err) {
 }
 
 Edge* Plan::FindWork() {
-  if (ready_.empty())
-    return NULL;
-  set<Edge*>::iterator i = ready_.begin();
-  Edge* edge = *i;
-  ready_.erase(i);
-  return edge;
+  return scheduler_.NextUnit();
 }
 
 void Plan::ScheduleWork(Edge* edge) {
   Pool* pool = edge->pool();
   if (pool->ShouldDelayEdge()) {
     pool->DelayEdge(edge);
-    pool->RetrieveReadyEdges(&ready_);
+    pool->RetrieveReadyEdges(scheduler_);
   } else {
     pool->EdgeScheduled(*edge);
-    ready_.insert(edge);
+    scheduler_.Schedule(edge);
   }
 }
 
 void Plan::ResumeDelayedJobs(Edge* edge) {
   edge->pool()->EdgeFinished(*edge);
-  edge->pool()->RetrieveReadyEdges(&ready_);
+  edge->pool()->RetrieveReadyEdges(scheduler_);
 }
 
 void Plan::EdgeFinished(Edge* edge) {
@@ -520,7 +515,7 @@ void Plan::Dump() {
       printf("want ");
     i->first->Dump();
   }
-  printf("ready: %d\n", (int)ready_.size());
+  printf("ready: %d\n", (int)scheduler_.UnitsWaiting());
 }
 
 struct RealCommandRunner : public CommandRunner {

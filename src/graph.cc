@@ -127,12 +127,26 @@ bool DependencyScan::RecomputeOutputDirty(Edge* edge,
     return edge->inputs_.empty() && !output->exists();
   }
 
-  BuildLog::LogEntry* entry = 0;
-
   // Dirty if we're missing the output.
   if (!output->exists()) {
     EXPLAIN("output %s doesn't exist", output->path().c_str());
     return true;
+  }
+
+  BuildLog::LogEntry* entry = 0;
+
+  //
+  // WADDELL: Hack in weight assignment here...
+  //
+  if (build_log())
+    entry = build_log()->LookupByOutput(output->path());
+
+  if (entry)
+  {
+    int weight = entry->end_time - entry->start_time;
+    edge->set_weight(weight);
+
+    EXPLAIN("Weighing [%d] - %s", weight, output->path().c_str());
   }
 
   // Dirty if the output is older than the input.
@@ -142,8 +156,7 @@ bool DependencyScan::RecomputeOutputDirty(Edge* edge,
     // build log.  Use that mtime instead, so that the file will only be
     // considered dirty if an input was modified since the previous run.
     TimeStamp most_recent_stamp = most_recent_input->mtime();
-    if (edge->rule_->restat() && build_log() &&
-        (entry = build_log()->LookupByOutput(output->path()))) {
+    if (edge->rule_->restat() && entry) {
       if (entry->restat_mtime < most_recent_stamp) {
         EXPLAIN("restat of output %s older than most recent input %s (%d vs %d)",
             output->path().c_str(), most_recent_input->path().c_str(),
